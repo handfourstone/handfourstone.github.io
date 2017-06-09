@@ -35,31 +35,3 @@
 
 
 <!-- *****handfourstone_start** -->
-<div id="main">
-<h1 id="欢迎光临我的博客"><span class="header-section-number">1</span> 欢迎光临我的博客</h1>
-<h2 id="linux"><span class="header-section-number">1.1</span> linux</h2>
-<h3 id="kernel"><span class="header-section-number">1.1.1</span> kernel</h3>
-<h4 id="网络协议栈"><span class="header-section-number">1.1.1.1</span> 网络协议栈</h4>
-<h5 id="邻居子系统"><span class="header-section-number">1.1.1.1.1</span> 邻居子系统</h5>
-<p><a href="./arp.html">邻居子系统学习笔记</a></p>
-</div>
-
-<!-- ******** handfourstone_end ************ -->
-
-                </article>
-            </div>
-        </div>
-    <script src="./markdownToc_files/jquery-1.10.2.min.js"></script>
-    <script src="./markdownToc_files/jquery.ztree.all-3.5.min.js"></script>
-    <script src="./markdownToc_files/jquery.ztree_toc.min.js"></script>
-    <script type="text/javascript">
-        $(document).ready(function(){
-            $('#tree').ztree_toc({
-                is_auto_number:false,
-                documment_selector:'.markdown-body',
-                is_expand_all: false,
-            });
-        });
-    </script>
-    </body>
-</html>
