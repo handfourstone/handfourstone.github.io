@@ -1,10 +1,23 @@
-#欢迎光临我的博客
+<p style="font-size:50px;text-align:center;">欢迎光临我的博客</p>
 
-## linux
+#声明
 
-### kernel
+<p style="font-size:20px">欢迎光临我的博客，鉴于本人能力有限，博客中可能存在一些错误或者描述不恰到的地方，希望大家批评指正。您的每次意见或者建议都将很快的反应在我的博客中。下面是我的联系方式。</p>
 
-#### 网络协议栈
+email: <i style="color:blue">handfourstone@gmail.com </i>\
+twitter: <i style="color:blue">handfourstone </i>\
+facebook: <i style="color:blue">fourstone hand </i>
 
-##### 邻居子系统
+# linux
+
+## 内核
+
+### 网络协议栈
+
+#### 邻居子系统
+
 [邻居子系统学习笔记](./arp.html)
+
+#### iptables/netfilter
+
+#### 路由子系统
