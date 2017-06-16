@@ -12,7 +12,7 @@
             $('#tree').ztree_toc({
                 is_auto_number:false,
                 documment_selector:'.markdown-body',
-                is_expand_all: false,
+                is_expand_all: true,
             });
         });
     </script>
