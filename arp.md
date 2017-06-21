@@ -1,4 +1,4 @@
-<p style="font-size:25px">[\<\<\<返回上层目录](index.html)</p>
+[<span style="font-size:20px;color:red">\<\<\<返回上级目录</span>](index.html)
 
 <span id="声明"></span>
 

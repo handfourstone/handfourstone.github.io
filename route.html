@@ -1,0 +1,762 @@
+<!-- 插件官网地址：http://ruby-china.org/topics/17028 -->
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>handfourstone博客</title>
+        <link rel="stylesheet" type="text/css" href="./markdownToc_files/github2-rightpart.css" media="all">
+        <link rel="stylesheet" type="text/css" href="./markdownToc_files/github1-contents.css">
+        <link rel="stylesheet" href="./markdownToc_files/zTreeStyle.css" type="text/css">
+        <style>
+            .ztree li a.curSelectedNode {
+                padding-top: 0px;
+                background-color: #FFE6B0;
+                color: black;
+                height: 16px;
+                border: 1px #FFB951 solid;
+                opacity: 0.8;
+            }
+            .ztree{
+                overflow: auto;
+                height:100%;
+                min-height: 200px;
+                top: 0px;
+            }
+        </style>
+    </head>
+    <body style="">
+        <div>
+            <div style="width:30%;">
+                <ul id="tree" class="ztree" style="width: 260px; overflow: auto; position: fixed; z-index: 2147483647; border: 0px none; left: 0px; bottom: 0px;">
+                <!-- 目录内容在网页另存为之后将插入到此处 -->
+                </ul>
+            </div>
+            <div id="readme" style="width:70%;margin-left:25%;">
+                <article class="markdown-body">
+
+
+<!-- *****handfourstone_start** -->
+<div id="main">
+<p><a href="index.html"><span style="font-size:20px;color:red">&lt;&lt;&lt;返回上级目录</span></a></p>
+<h1 id="本部分主要的数据结构"><span class="header-section-number">1</span> 本部分主要的数据结构</h1>
+<pre><code>include
+├── net
+│   ├── dst.h
+│   │   ├── struct dst_entry
+│   │   └── xxxxxxxxxxxxxx
+│   │
+│   ├── dst_ops.h
+│   │   ├── struct dst_ops
+│   │   └── xxxxxxxxxxxxxx
+│   │
+│   ├── ip_fib.h
+│   │   ├── struct fib_table
+│   │   ├── struct fib_nh
+│   │   ├── struct fib_info
+│   │   ├── struct fib_result
+│   │   └── xxxxxxxxxxxxxx
+│   │
+│   ├── flow.h
+│   │   ├── struct flowi
+│   │   └── xxxxxxxxxxxxxx
+│   │
+│   ├── fib_rules.h
+│   │   ├── struct fib_rule
+│   │   └── xxxxxxxxxxxxxx
+│   │
+│   ├── inetpeer.h
+│   │
+│   └── route.h
+│       ├── struct rtable
+│       └── xxxxxxxxxxxxxx
+├── 
+│   ├── fib_lookup.h        
+│   │   └── struct fib_alias
+
+net
+├── ipv4
+│   ├── fib_rules.c
+│   │   └── struct fib4_rule
+│   ├── fib_lookup.h        
+│   │   └── struct fib_alias
+│   │
+│   │
+│   │
+│
+└── core</code></pre>
+<h2 id="fib_table"><span class="header-section-number">1.1</span> fib_table</h2>
+<ol style="list-style-type: decimal">
+<li><p>struct hlist_node tb_hlist</p></li>
+<li><p>u32 tb_id</p>
+<p>路由表标识符。取值定义在 include/uapi/linux/rtnetlink.h 中。</p>
+<pre><code>enum rt_class_t {
+    RT_TABLE_UNSPEC=0,
+    /* User defined values */
+    RT_TABLE_COMPAT=252,
+    RT_TABLE_DEFAULT=253,
+    RT_TABLE_MAIN=254,
+    RT_TABLE_LOCAL=255,
+    RT_TABLE_MAX=0xFFFFFFFF
+};</code></pre></li>
+<li><p>int tb_num_default</p></li>
+<li><p>struct rcu_head rcu</p></li>
+<li><p>unsigned long *tb_data</p></li>
+<li><p>unsigned long __data[0]</p></li>
+</ol>
+<h2 id="fib_alias"><span class="header-section-number">1.2</span> fib_alias</h2>
+<p>fib_alias 实例是用来区分目的网络相同但其它配置参数（除了目的地址以外）不同的路由项。下面逐一描述该结构中的字段。</p>
+<ol style="list-style-type: decimal">
+<li><p>struct hlist_node fa_list</p></li>
+<li><p>struct fib_info *fa_info</p>
+<p>该指针指向一个 fib_info 实例，该结构存储着如何处理与该路由相匹配封包的信息。</p></li>
+<li><p>u8 fa_tos</p>
+<p>路由的服务类型（TOS）位字段。当该值为 0 时意味着还没有配置 TOS，所以在路由查找时任何值都可以匹配。不要将 fa_tos 字段与 fib_fule 结构中的 t_tos 字段相混淆。fa_tos 字段允许用户在 TOS 中对个别路由表项指定条件，而 fib_rule 结构中的 r_tos 字段是用户在 TOS 中制定策略规则。</p></li>
+<li><p>u8 fa_type</p>
+<p>参见 <a href="#rtable">rtable</a> 结构一节对 rt_type 字段的描述。</p></li>
+<li><p>u8 fa_state</p>
+<p>一些按位定义的标志，迄今为止只定义了下面一个标志（net/ipv4/fib_lookup.h）：</p>
+<pre><code>FA_S_ACCESSED</code></pre>
+<p>无论何时查找访问到 fib_alias 实例，就用该标识来标记。</p></li>
+<li><p>u8 fa_slen</p></li>
+<li><p>u32 tb_id</p></li>
+<li><p>s16 fa_default</p></li>
+<li><p>struct rcu_head rcu</p></li>
+</ol>
+<h2 id="fib_nh"><span class="header-section-number">1.3</span> fib_nh</h2>
+<p>对每一个吓一跳，内核需要跟踪的信息与 IP 地址相比更多。fib_nh 结构在下面字段中存储这些额外的信息：</p>
+<ol style="list-style-type: decimal">
+<li><p>struct net_device *nh_dev</p>
+<p>这是与设备标识 nf_oif（后面介绍）相关的 net_device 数据结构。因为设备标识符和指向 net_device 结构的指针都需要利用，虽然利用其中任何一项都可以得到另一项，但这两项都保存在 fib_nh 结构中。</p></li>
+<li><p>struct hlist_node nh_hash</p>
+<p>用于将 fib_nh 数据结构插入到在[吓一跳路由结构的组织]一节中描述的 hash 表中。</p></li>
+<li><p>struct fib_info *nh_parent</p>
+<p>该指针指向包含该 fib_nh 实例的 fib_info 结构，参见图 5.1。</p></li>
+<li><p>unsigned int nh_flags</p>
+<p>在 include/linux/rtnetlink.h 文件中定义的一组 RTNH_F_XXX 标识，在表 7.7 中列出。</p></li>
+<li><p>unsigned char nh_scope</p>
+<p>用于获取吓一跳路由范围。在大多数情况下为 RT_SCOPE_LINK。该字段由 fib_check_nh 初始化。</p></li>
+</ol>
+<p>#ifdef CONFIG_IP_ROUTE_MULTIPATH</p>
+<ol start="6" style="list-style-type: decimal">
+<li><p>int nh_weight</p>
+<p>仅当内核编译为支持多路径时，该字段才会成为该结构体的一部分。在<a href="#多路径路由背后的概念">多路径路由背后的概念</a>一节对该字段由详细介绍。该字段由用户利用关键字 weight 来设置。</p></li>
+<li><p>atomic_t nh_upper_bound</p></li>
+</ol>
+<p>#endif</p>
+<p>#ifdef CONFIG_IP_ROUTE_CLASSID</p>
+<ol start="8" style="list-style-type: decimal">
+<li><p>__u32 nh_tclassid</p>
+<p>仅当内核编译为支持基友路由表的分类器时，该字段才是 fib_nh 数据结构的一部分。它的值是利用 realms 关键字来设置。参见<a href="#策略路由与基于路由表的分类器">策略路由与基于路由表的分类器</a>一节。</p></li>
+</ol>
+<p>#endif</p>
+<ol start="9" style="list-style-type: decimal">
+<li><p>int nh_oif</p>
+<p>出口设备标识符。它是利用关键字 oif 和 dev 来设置的。</p></li>
+<li><p>__be32 nh_gw</p>
+<p>下一跳网管的 IP 地址，由关键字 via 提供。注意在 NAT 情况下，他表示 NAT 路由器向外部世界公告的地址。以及在 NAT 路由器向内网中主机发送回应之前向外部世界回应的地址。</p></li>
+<li><p>__be32 nh_saddr</p></li>
+<li><p>int nh_saddr_genid</p></li>
+<li><p>struct rtable __rcu * __percpu *nh_pcpu_rth_output</p></li>
+<li><p>struct rtable __rcu *nh_rth_input</p></li>
+<li><p>struct fnhe_hash_bucket __rcu *nh_exceptions</p></li>
+<li><p>struct lwtunnel_state *nh_lwtstate</p></li>
+</ol>
+<h2 id="fib_info"><span class="header-section-number">1.4</span> fib_info</h2>
+<p>在前面几节已经描述过，定义一个路由项的参数包含在 fib_node 结构和 fib_alias 结构的组合体中。如下一跳网关等重要的路由信息则存储在一个 fib_info 结构内。下面逐一描述该结构中的字段。</p>
+<ol style="list-style-type: decimal">
+<li><p>struct hlist_node fib_hash</p></li>
+<li><p>struct hlist_node fib_lhash</p>
+<p>用于将 fib_info 数据结构插入到 <a href="#fib_info结构的组织">fib_info 结构的组织</a>一节中描述的两个 hash 表中。</p></li>
+<li><p>struct net *fib_net</p></li>
+<li><p>int fib_treeref</p>
+<p>引用计数。持有该 fib_info 实例引用的 fib_node 数据结构的数目。</p></li>
+<li><p>atomic_t fib_clntref</p>
+<p>引用计数。由于路由查找成功而被持有的引用计数。</p></li>
+<li><p>unsigned int fib_flags</p>
+<p>RTNH_F_XXX 标识的设置见下表。当前使用的唯一标识时 RTNH_F_DEAD。当与一个多路径路由项相关联的所有 fib_nh 结构都设置了 RTNH_F_DEAD 标识时，设置该标识（参见<a href="#常见的辅助程序与宏">常用的辅助程序与宏</a>一节）。</p></li>
+<li><p>unsigned char fib_dead</p>
+<p>标记路由项正在被删除的路由标识。当该标识置 1 时，警告该数据结构将被删除而不能再使用。参见<a href="#删除路由">删除路由</a>一节。</p></li>
+<li><p>unsigned char fib_protocol</p>
+<p>已安装的路由协议。该字段的可能取值 RTPROT_XXX 定义在 include/linux/rtnetlink.h 中，并在表 6.8 和表 6.9 中列出了这些值（这两个表中缺少了 ROUTED，因为它不使用 Netlink 接口与内核通信），参见[路由协议守护进程]一节中对这些协议的概述。</p>
+<p>fib_protocol 大于 RTPROT_STATIC 的值只用于不是由内核产生的路由项（即这些协议由用户空间的路由守护进程生成）。</p>
+<p>使用该字段的一个例子是，限制路由守护进程只能操作自己产生的路由项。更多细节参考第一章。</p>
+<p>Table 7.8 Vaules of fib_protocol used by the kernel</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">值</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">RTPROT_UNSPECT</td>
+<td align="left">无效的参数。</td>
+</tr>
+<tr class="even">
+<td align="left">RTPROT_REDIRECT</td>
+<td align="left">由 ICMP 重定向安装的路由，当前的 IPv4 不使用。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTPROT_KERNEL</td>
+<td align="left">由内核安装的路由，参见<a href="内核插入路由">内核插入路由：fib_magic 函数</a>。</td>
+</tr>
+<tr class="even">
+<td align="left">RTPROT_BOOT</td>
+<td align="left">由用户空间命令如 ip route 和 route 安装的路由。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTPROT_STATIC</td>
+<td align="left">由管理员安装的路由。</td>
+</tr>
+</tbody>
+</table>
+<p>Table 7.9 Values if fib_protocol used by user space</p>
+<table>
+<colgroup>
+<col width="7%"></col>
+<col width="92%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">值</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">RTPROT_GateD</td>
+<td align="left">GateD 添加的路由。</td>
+</tr>
+<tr class="even">
+<td align="left">RTPROT_RA</td>
+<td align="left">RDISC（IPv4） 和 ND（IPv6）路由器公告的路由。这是一种 RFC 1256 定义的 ICMP 路由发现协议的机制，<br />
+使主机发现相邻的路由器。rdisc 是 iputils 软件包的一部分，用于实现用户空间的 ICMP 路由器发现消息。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTPROT_MRT</td>
+<td align="left">由多线程路由工具包（Muting-Threaded Routing Toolkit, MRT）添加的路由。</td>
+</tr>
+<tr class="even">
+<td align="left">RTPROT_ZEBRA</td>
+<td align="left">由 Zebra 添加的路由。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTPROT_BITD</td>
+<td align="left">由 BIRD 添加的路由。</td>
+</tr>
+<tr class="even">
+<td align="left">RTPROT_DMROUTED</td>
+<td align="left">由 DECnet 路由守护进程添加的路由。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTPROT_XORP</td>
+<td align="left">由 XORP 路由守护进程添加的路由。</td>
+</tr>
+<tr class="even">
+<td align="left">RTPROT_NTK</td>
+<td align="left">由 Netsukuku 添加的路由。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTPROT_DHCP</td>
+<td align="left">由 DHCP 客户端添加的路由。</td>
+</tr>
+<tr class="even">
+<td align="left">RTPROT_MROUTED</td>
+<td align="left">由 Multicast 守护进程添加的路由。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTPROT_BABEL</td>
+<td align="left">由 Babel 守护进程添加的路由。</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>unsigned char fib_scope</p></li>
+<li><p>unsigned char fib_type</p></li>
+<li><p>__be32 fib_prefsrc</p>
+<p>首选 IP 地址。参见<a href="#选择源%20IP%20地址">选择源 IP 地址</a>一节。</p></li>
+<li><p>u32 fib_tb_id</p></li>
+<li><p>u32 fib_priority</p>
+<p>路由的优先级。值越小则优先级越高。它的值可以用 IPROUTE2 包中的 metric/priorty/preference 关键字来配置。当没有明确配置时，内核将他的值初始化为默认值 0。</p></li>
+<li><p>u32 *fib_metrics;</p>
+<p>当配置路由时，ip route 命令允许指定一组规格（metric）。fib_metric 是存储这组规格的向量。没有明确设置的规格在初始化时被设置为 0。参见<a href="#路由的基本要素">路由的基本要素</a>一节中列出的可用的规格。表 6.10 列出了路由的基本要素一节中列出的规格与在 include/linux/rtnetlink.h 文件中定义的相关内核符号 RTAX_XXX 之间的关系。</p>
+<p>Table 7.10 Routing metrics</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">规格</th>
+<th align="left">内核符号</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"></td>
+<td align="left">RTAX_UNSPEC</td>
+</tr>
+<tr class="even">
+<td align="left">没有规格</td>
+<td align="left">RTAX_LOCK</td>
+</tr>
+<tr class="odd">
+<td align="left">路径 MTU</td>
+<td align="left">RTAX_MTU</td>
+</tr>
+<tr class="even">
+<td align="left">最大的公告窗口</td>
+<td align="left">RTAX_WINDOW</td>
+</tr>
+<tr class="odd">
+<td align="left">往返时间（RTT）</td>
+<td align="left">RTAX_RTT</td>
+</tr>
+<tr class="even">
+<td align="left">RTT 变量</td>
+<td align="left">RTAX_RTTVAR</td>
+</tr>
+<tr class="odd">
+<td align="left">慢启动门限值</td>
+<td align="left">RTAX_SSTHRESH</td>
+</tr>
+<tr class="even">
+<td align="left">拥塞窗口</td>
+<td align="left">RTAX_CWND</td>
+</tr>
+<tr class="odd">
+<td align="left">最大的段大小</td>
+<td align="left">RTAX_ADVMSS</td>
+</tr>
+<tr class="even">
+<td align="left">最大的重定序（Reordering）</td>
+<td align="left">RTAX_REORDERING</td>
+</tr>
+<tr class="odd">
+<td align="left">默认的存活时间（TTL）</td>
+<td align="left">RTAX_HOPLIMIT</td>
+</tr>
+<tr class="even">
+<td align="left">初始的拥塞窗口</td>
+<td align="left">RTAX_INITCWND</td>
+</tr>
+<tr class="odd">
+<td align="left">不是一种规格</td>
+<td align="left">RTAX_FEATURES</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="left">RTAX_RTO_MIN</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="left">RTAX_INITRWND</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="left">RTAX_QUICKACK</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="left">RTAX_CC_ALGO</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>#define fib_mtu fib_metrics[RTAX_MTU-1]</p>
+<p>用于宏用于访问 fib_metrics 数组中指定的元素 RTAX_MTU。</p></li>
+<li><p>#define fib_window fib_metrics[RTAX_WINDOW-1]</p>
+<p>用于宏用于访问 fib_metrics 数组中指定的元素 RTAX_WINDOW。</p></li>
+<li><p>#define fib_rtt fib_metrics[RTAX_RTT-1]</p>
+<p>用于宏用于访问 fib_metrics 数组中指定的元素 RTAX_RTT。</p></li>
+<li><p>#define fib_advmss fib_metrics[RTAX_ADVMSS-1]</p>
+<p>用于宏用于访问 fib_metrics 数组中指定的元素 RTAX_ADVMSS。</p></li>
+<li><p>int fib_nhs</p>
+<p>可变长度的数组，fib_nhs 时该向量的大小。仅当内核支持多路径功能时，fib_nhs 才可能大于 1，参见<a href="#多路径路由背后的概念">多路径路由背后的概念</a>一节，以及图 5.1 。</p></li>
+</ol>
+<p>#ifdef CONFIG_IP_ROUTE_MULTIPATH<br />
+20. int fib_weight</p>
+<p>#endif</p>
+<ol start="21" style="list-style-type: decimal">
+<li><p>unsigned int fib_offload_cnt</p></li>
+<li><p>struct rcu_head rcu</p></li>
+<li><p>struct fib_nh fib_nh[0]</p>
+<p>可变长度的数组，fib_nhs 时该向量的大小。仅当内核支持多路径功能时，fib_nhs 才可能大于 1，参见<a href="#多路径路由背后的概念">多路径路由背后的概念</a>一节，以及图 5.1 。</p></li>
+<li><p>#define fib_dev fib_nh[0].nh_dev</p>
+<p>这个宏用于访问 fib_nh 向量中第一个 fib_nh 实例的 nh_dev 字段。参见图 5.1 。</p></li>
+</ol>
+<h2 id="fib_rule"><span class="header-section-number">1.5</span> fib_rule</h2>
+<p>利用 ip rule 命令来配置策略路由规则。如果你的 linux 系统上安装了 IPROUTE2 软件包，就可以输入 ip rule help 来查看该命令的语法。策略存储在 fib_rule 结构中，下面逐一介绍该结构的字段：</p>
+<ol style="list-style-type: decimal">
+<li><p>struct list_head list</p>
+<p>将所有的 fib_rule 结构连接到一个包含所有 fib_rule 实例的全局链表内，参见图 6.8。</p></li>
+<li><p>int iifindex</p>
+<p>iifname （下面介绍）是策略应用的设备的名称，给定的 iifname，内核可以发现相关的 net_device 实例，并将该实例的 ifindex 字段拷贝到该字段中。iifindex 值区 -1 代表禁止该规则（参见<a href="#对策略数据库的影响">对策略数据库的影响一节</a>）。</p></li>
+<li><p>int oifindex</p></li>
+<li><p>u32 mark</p></li>
+<li><p>u32 mark_mask</p></li>
+<li><p>u32 flags</p></li>
+<li><p>u32 table</p></li>
+<li><p>u8 action</p>
+<p>该字段允许的取值是定义在 include/uapi/linux/rtnetlink.h 文件中的 rtm_type 枚举值（RTN_UNICAST 等）。这些值含义在 <a href="#rtable">rtable</a> 结构中介绍。</p>
+<p>当配置一条规则时，用户可以明确使用 type 关键字来设定该字段。如果没有明确配置，IPROUTE2 在添加规则时设置该字段的值为 RTN_UNICAST，在其它情况下设置为 RTN_UNSPEC（例如，当删除规则时）。</p></li>
+<li><p>u8 l3mdev</p></li>
+<li><p>u32 target</p></li>
+<li><p>__be64 tun_id</p></li>
+<li><p>struct fib_rule __rcu *ctarget</p></li>
+<li><p>struct net *fr_net</p></li>
+<li><p>atomic_t refcnt</p></li>
+<li><p>u32 pref</p>
+<p>路由规则的优先级。当管理员用 IPROUTE2 软件包添加一个策略时，可以使用关键字 Priority、preference 和 order 来配置。如果没有明确配置，内核为其分配一个优先级，该值比用户添加的最后一个规则的优先级小一个级别（参见<a href="#inet_rtm_newrule">inet_rtm_newrule</a>）。</p></li>
+<li><p>int suppress_ifgroup</p></li>
+<li><p>int suppress_prefixlen</p></li>
+<li><p>char iifname[IFNAMSIZ]</p></li>
+<li><p>char oifname[IFNAMSIZ]</p></li>
+<li><p>struct fib_kuid_range uid_range</p></li>
+<li><p>struct rcu_head rcu</p></li>
+</ol>
+<h2 id="fib_result"><span class="header-section-number">1.6</span> fib_result</h2>
+<p>fib_result 结构被 fib_semantic_match 初始化为路由查找结果，更多细节参考（<a href="#语义匹配附加标准">语义匹配附加标准</a>）。该结构中的字段为：</p>
+<ol style="list-style-type: decimal">
+<li><p>unsigned char prefixlen</p>
+<p>匹配路由的前缀长度。参见 <a href="#fn_zone">fn_zone</a> 中对 fz_order 的描述。</p></li>
+<li><p>unsigned char nh_sel</p>
+<p>多路径路由由多个吓一跳定义。该字段标识已被选中的下一跳。</p></li>
+<li><p>unsigned char type</p>
+<p>该字段被初始化为相匹配的 fib_alias 实例的 fa_type 的取值。</p></li>
+<li><p>unsigned char scope</p>
+<p>该字段被初始化为相匹配的 fib_alias 实例的 fa_scope 的取值。</p></li>
+<li><p>u32 tclassid</p></li>
+<li><p>struct fib_info *fi</p>
+<p>与匹配的 fib_alias 实例相关联的 fib_info 实例。</p></li>
+<li><p>struct fib_table *table</p></li>
+<li><p>struct hlist_head *fa_head</p></li>
+</ol>
+<h2 id="rtable"><span class="header-section-number">1.7</span> rtable</h2>
+<p>IPv4 使用 rtable 数据结构来存储缓存中的路由表项（IPv6 使用 rt6_info, DECnet 使用 dn_route）。为了转储路由缓存的内容，可以查看 /proc/net/rt_cache 文件（参考<a href="#通过/proc文件系统调整">通过 /proc 文件系统调整</a>一节），或是使用 ip route list cache 或 route -C 命令。下面逐一介绍该结构中的字段。</p>
+<ol style="list-style-type: decimal">
+<li><p>struct dst_entry dst</p></li>
+<li><p>int rt_genid</p></li>
+<li><p>unsigned int rt_flags</p>
+<p>在该位图中可以设置的标识为在 include/uapi/linux/in_route.h 文件中定义的 RTCF_XXX 值，表 7.11 中列出了这些值。</p>
+<p>Table 7.11 Possible values for rt_flags</p>
+<table style="width:100%;">
+<colgroup>
+<col width="9%"></col>
+<col width="90%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">值</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">RTCF_NOTIFY</td>
+<td align="left">路由表项的任何变化，通过 Netlink 通知感兴趣的用户空间应用程序。该标识用 ip route get 10.0.1.0/24 notofy 的命令设置。</td>
+</tr>
+<tr class="even">
+<td align="left">RTCF_DIRECTDST</td>
+<td align="left">没有使用。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTCF_REDIRECTED</td>
+<td align="left">表项已被添加加以响应接收到的 ICMP_REDIRECT 消息。（参见 <a href="#ip_rt_redirect">ip_rt_redirect</a> 及其调用者。）</td>
+</tr>
+<tr class="even">
+<td align="left">RTCF_TPROXY</td>
+<td align="left">没有使用。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTCF_FAST</td>
+<td align="left">没有使用。</td>
+</tr>
+<tr class="even">
+<td align="left">RTCF_MASQ</td>
+<td align="left">没有使用。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTCF_SNAT</td>
+<td align="left">没有使用。</td>
+</tr>
+<tr class="even">
+<td align="left">RTCF_DOREDIRECT</td>
+<td align="left">当 ICMP_REDIRECT 消息必须被送回源地址时，该标识由 ip_route_input_slow 设置。ip_forward 基于此标识和其它信息，决定是否真正送 ICMP 重定向消息。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTCF_DIRECTSRC</td>
+<td align="left">该标识主要用于通知 ICMP 代码，不应当响应地址掩码请求消息。每次调用 fib_validate_source 检查到接收封包的源地址通过一个本地 scope（RT_SCOPE_HOST）的下一跳时可达的，就设置该标识。</td>
+</tr>
+<tr class="even">
+<td align="left">RTCF_DNAT</td>
+<td align="left">该功能已经被删除。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTCF_BROADCAST</td>
+<td align="left">路由的目的地址是一个广播地址。</td>
+</tr>
+<tr class="even">
+<td align="left">RTCF_MULTICAST</td>
+<td align="left">路由的目的地址是一个多播地址。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTCF_REJECT</td>
+<td align="left">没有使用。</td>
+</tr>
+<tr class="even">
+<td align="left">RTCF_LOCAL</td>
+<td align="left">路由的目的地址是一个本地地址（即本地接口上配置的某个地址）。对本地广播地址和多播地址也设置该标识<br />
+（参见 <a href="#ip_route_input_mc">ip_route_input_mc</a>）。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTCF_NAT</td>
+<td align="left">RTCF_DNAT|RTCF_SNAT</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>__u16 rt_type</p>
+<p>路由类型。它间接定义了当路由器查找匹配时应采取的动作。该字段可能的取值在 include/uapi/linux/rtnetlink.h 文件中定义了 RTN_XXX 宏，表 7.12 列出了这些值。</p>
+<p>Table 7.12 Possible values for rt_type</p>
+<table style="width:99%;">
+<colgroup>
+<col width="9%"></col>
+<col width="88%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">值</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">RTN_UNSPEC</td>
+<td align="left">定义一个未初始化的值。例如，当从路由表中删除一个表项时使用该值，这是因为删除操作不需要制定路由表项的类型。</td>
+</tr>
+<tr class="even">
+<td align="left">RTN_UNICAST</td>
+<td align="left">该路由是一个直接或间接（通过一个网关）的单播地址路由。当用户通过 ip route 命令添加路由但没有指定其它路由类型时，路由类型默认被设置为 RTN_UNICAST。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTN_LOCAL</td>
+<td align="left">目的地址是一个配置在本地接口上的地址。</td>
+</tr>
+<tr class="even">
+<td align="left">RTN_BROADCAST</td>
+<td align="left">目的地址是一个广播地址。匹配的入口封包以广播方式发往本地，并且匹配的出口封包以广播形式发送出去。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTN_ANYCAST</td>
+<td align="left">匹配的入口封包以广播形式送往本地，匹配的出口封包以单播形式发送出去。IPv4 不使用。</td>
+</tr>
+<tr class="even">
+<td align="left">RTN_MULTICAST</td>
+<td align="left">目的地址是一个多播地址。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTN_BLACKHOLE</td>
+<td align="left">丢弃。</td>
+</tr>
+<tr class="even">
+<td align="left">RTN_UNREACHABLE</td>
+<td align="left">目标不可达。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTN_PROHIBIT</td>
+<td align="left">管理员禁止。</td>
+</tr>
+<tr class="even">
+<td align="left">RTN_THROW</td>
+<td align="left">不在这张表中。</td>
+</tr>
+<tr class="odd">
+<td align="left">RTN_NAT</td>
+<td align="left">转换这个地址。</td>
+</tr>
+<tr class="even">
+<td align="left">RTN_XRESOLVE</td>
+<td align="left">由一个外部解析器来处理该路由。</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>__u8 rt_is_input</p></li>
+<li><p>__u8 rt_uses_gateway</p>
+<p>当目的主机直连时（即在同一链路上），该字段匹配目的地址。当需要通过一个网关到达目的地址时，该字段设备为被路由识别的下一跳网关。</p></li>
+<li><p>int rt_iif</p>
+<p>入口设备标识符。该值是从入口设备的 net_device 数据结构中取出。对本地产生的流量（因此不是从任何接口上接收到的），该字段被设置成流程设备的 ifindex 字段。</p></li>
+<li><p>__be32 rt_gateway</p></li>
+<li><p>u32 rt_pmtu</p></li>
+<li><p>u32 rt_table_id</p></li>
+<li><p>struct list_head rt_uncached</p></li>
+<li><p>struct uncached_list *rt_uncached_list</p></li>
+</ol>
+<h2 id="dst_entry"><span class="header-section-number">1.8</span> dst_entry</h2>
+<p>该结构用于存储缓存路由项中独立于协议的信息。L3 层协议在单独的结构中存储本协议更多的私有信息（例如，IPv4 使用 rtable 结构）。下面逐一介绍该结构的字段：</p>
+<ol style="list-style-type: decimal">
+<li><p>struct rcu_head rcu_head</p>
+<p>处理互斥。</p></li>
+<li><p>struct dst_entry *child</p>
+<p>IPsec 代码使用该字段。</p></li>
+<li><p>struct net_device *dev</p>
+<p>出口设备（即将封包送达目的地的发送设备）。</p></li>
+<li><p>struct dst_ops *ops</p>
+<p>用于处理 dst_entry 结构的 VFT。</p></li>
+<li><p>unsigned long _metrics</p></li>
+<li><p>unsigned long expires</p>
+<p>表示该表项将过期的时间戳。参见<a href="#过期标准">过期标准</a>一节。</p></li>
+<li><p>struct dst_entry *path</p>
+<p>IPsec 代码使用该字段。</p></li>
+<li><p>struct dst_entry *from</p></li>
+</ol>
+<p>#ifdef CONFIG_XFRM</p>
+<ol start="9" style="list-style-type: decimal">
+<li><p>struct xfrm_state *xfrm</p>
+<p>IPsec 代码使用该字段。</p></li>
+</ol>
+<p>#else</p>
+<ol start="10" style="list-style-type: decimal">
+<li>void *__pad1</li>
+</ol>
+<p>#endif</p>
+<ol start="11" style="list-style-type: decimal">
+<li><p>int (*input)(struct sk_buff *)</p>
+<p>处理入口封包的函数，参见<a href="#缓存查找">缓存查找</a>一节。</p></li>
+<li><p>int (*output)(struct net *net, struct sock *sk, struct sk_buff *skb)</p>
+<p>处理出口封包的函数，参见<a href="#缓存查找">缓存查找</a>一节。</p></li>
+<li><p>unsigned short flags</p>
+<p>标识集合。DST_HOST 被 TCP 使用。表示主机路由（即它不是到网络或到一个广播/多播地址的路由）。DST_NOXFRM、DST_NOPOLICY 和 DST_NOHASH 只用于 IPsec。</p></li>
+<li><p>#define DST_HOST 0x0001</p>
+<p>表示该路由是一个主机路由，即它不是到网络或者到广播/多播地址的路由。</p></li>
+<li><p>#define DST_NOXFRM 0x0002</p>
+<p>只用于 IPsec。</p></li>
+<li><p>#define DST_NOPOLICY 0x0004</p>
+<p>只用于 IPsec。</p></li>
+<li><p>#define DST_NOHASH 0x0008</p>
+<p>只用于 IPsec。</p></li>
+<li><p>#define DST_NOCACHE 0x0010</p></li>
+<li><p>#define DST_NOCOUNT 0x0020</p></li>
+<li><p>#define DST_FAKE_RTABLE 0x0040</p></li>
+<li><p>#define DST_XFRM_TUNNEL 0x0080</p></li>
+<li><p>#define DST_XFRM_QUEUE 0x0100</p></li>
+<li><p>#define DST_METADATA 0x0200</p></li>
+<li><p>short error</p>
+<p>当 fib_lookup API（只被 IPv4 使用）失败时，错误值（正值）被保存在该字段中，又后面的 ip_error 使用该值来决定如何处理本次路由查找失败（即决定产生哪一类 ICMP 消息）。</p></li>
+<li><p>short obsolete</p>
+<p>用于定义 dst_entry 实例的可用状态：0（默认值，下面的 DST_OBSOLETE_NONE）表示该结构有效而且可以被使用，2（下面的 DST_OBSOLETE_DEAD）表示该结构将被删除因而不能被使用，-1（下面的 DST_OBSOLETE_DEAD）被 IPsec 和 IPv6 使用但不被 IPv4 使用。</p></li>
+<li><p>#define DST_OBSOLETE_NONE 0</p>
+<p>表示该结构有效而且可以被使用。</p></li>
+<li><p>#define DST_OBSOLETE_DEAD 2</p>
+<p>表示该结构被删除因而不能被使用。</p></li>
+<li><p>#define DST_OBSOLETE_FORCE_CHK -1</p>
+<p>表示该结构被 IPsec 和 IPv6 使用但不被 IPv4 使用。</p></li>
+<li><p>#define DST_OBSOLETE_KILL -2</p></li>
+<li><p>unsigned short header_len</p>
+<p>IPsec 代码使用该字段。</p></li>
+<li><p>unsigned short trailer_len</p>
+<p>IPsec 代码使用该字段。</p></li>
+<li><p>unsigned short __pad3</p></li>
+</ol>
+<p>#ifdef CONFIG_IP_ROUTE_CLASSID</p>
+<ol start="33" style="list-style-type: decimal">
+<li><p>__u32 tclassid</p>
+<p>基于路由表的分类器的标识。参见<a href="#策略路由和基于路由表的分类器">策略路由和基于路由表的分类器</a>一节。</p></li>
+</ol>
+<p>#else</p>
+<ol start="34" style="list-style-type: decimal">
+<li>__u32 __pad2</li>
+</ol>
+<p>#endif</p>
+<p>#ifdef CONFIG_64BIT</p>
+<ol start="35" style="list-style-type: decimal">
+<li>long __pad_to_align_refcnt[2]</li>
+</ol>
+<p>#endif</p>
+<ol start="36" style="list-style-type: decimal">
+<li><p>atomic_t __refcnt</p>
+<p>引用计数。参见<a href="#删除DST表项">删除 DST 表项</a>一节。</p></li>
+<li><p>int __use</p>
+<p>该表项已经被使用的次数（即缓存查找返回该表项的次数）。</p></li>
+<li><p>unsigned long lastuse</p>
+<p>用于记录该表项上次被使用的时间戳。当缓存查找成功时更新该时间戳。垃圾回收函数使用该时间戳来选择最合适被释放的结构。</p></li>
+<li><p>struct lwtunnel_state *lwtstate</p></li>
+</ol>
+<p>union {</p>
+<ol start="40" style="list-style-type: decimal">
+<li><p>struct dst_entry *next</p>
+<p>用于将分布在同一个 hash 表的 bucket 中具有冲突的 dst_entry 实例链接在一起。参见图 4.1。</p></li>
+<li><p>struct rtable __rcu *rt_next</p></li>
+<li><p>struct rt6_info *rt6_next</p></li>
+<li><p>struct dn_route __rcu *dn_next</p></li>
+</ol>
+<p>}</p>
+<h2 id="dst_ops"><span class="header-section-number">1.9</span> dst_ops</h2>
+<p>dst_ops 结构时独立于协议的缓存与使用 L3 层协议路由缓存之间的接口。参见 <a href="#DST与调用协议间的接口">DST 与调用协议间的接口</a>一节。下面逐一描述该结构的字段：</p>
+<ol style="list-style-type: decimal">
+<li><p>unsigned short family</p>
+<p>地址簇。参见 include/linux/socket.h 文件中的 AF_XXX。</p></li>
+<li><p>unsigned int gc_thresh</p>
+<p>该字段用于垃圾回收算法，指定了路由缓存的大小（即 bucket 的数目）。其初始化是由 ip_rt_init（IPv4 路由子系统初始化函数）完成的。</p></li>
+<li><p>int (*gc)(struct dst_ops *ops)</p>
+<p>当协议已经分配的 dst_entry 实例数目大于或等于门限值 gc_thresh 时，dst_alloc 函数启动垃圾回收函数 gc。</p></li>
+<li><p>struct dst_entry * (*check)(struct dst_entry *, __u32 cookie)</p>
+<p>参见 <a href="#DST与调用协议间的接口">DST 与调用协议间的接口</a>一节。</p></li>
+<li><p>unsigned int (*default_advmss)(const struct dst_entry *)</p></li>
+<li><p>unsigned int (*mtu)(const struct dst_entry *)</p></li>
+<li><p>u32 * (*cow_metrics)(struct dst_entry *, unsigned long)</p></li>
+<li><p>void (*destroy)(struct dst_entry *)</p>
+<p>参见 <a href="#DST与调用协议间的接口">DST 与调用协议间的接口</a>一节。</p></li>
+<li><p>void (*ifdown)(struct dst_entry *, struct net_device *dev, int how)</p>
+<p>参见 <a href="#DST与调用协议间的接口">DST 与调用协议间的接口</a>一节。</p></li>
+<li><p>struct dst_entry * (*negative_advice)(struct dst_entry *)</p>
+<p>参见 <a href="#DST与调用协议间的接口">DST 与调用协议间的接口</a>一节。</p></li>
+<li><p>void (*link_failure)(struct sk_buff *)</p>
+<p>参见 <a href="#DST与调用协议间的接口">DST 与调用协议间的接口</a>一节。</p></li>
+<li><p>void (*update_pmtu)(struct dst_entry *dst, struct sock *sk, struct sk_buff *skb, u32 mtu)</p>
+<p>参见 <a href="#DST与调用协议间的接口">DST 与调用协议间的接口</a>一节。</p></li>
+<li><p>void (*redirect)(struct dst_entry *dst, struct sock *sk, struct sk_buff *skb)</p></li>
+<li><p>in (*local_out)(struct net *net, struct sock *sk, struct sk_buff *skb)</p></li>
+<li><p>struct neighbour * (*neigh_lookup)(const struct dst_entry *dst, struct sk_buff *skb, const void *daddr)</p></li>
+<li><p>void (*confirm_neigh)(const struct dst_entry *dst, const void *daddr)</p></li>
+<li><p>struct kmem_cache *kmem_cachep</p>
+<p>分配路由缓存元素的内存池。</p></li>
+<li><p>struct percpu_counter pcpuc_entries ____cacheline_aligned_in_smp</p></li>
+</ol>
+<h2 id="flowi"><span class="header-section-number">1.10</span> flowi</h2>
+<p>使用 flowi 数据结构，可以根据入口设备和出口设备，L3 和 L4 层协议报头中的参数等字段的组合对流量进行分类。它通常被用作路由查找的搜索关键字，IPsec 策略的流量选择器及其它高级用途。下面介绍该结构中的字段：</p>
+<p>union {</p>
+<ol style="list-style-type: decimal">
+<li>struct flowi_common __fl_common</li>
+<li>struct flowi4 ip4</li>
+<li>struct flowi6 ip6</li>
+<li>struct flowidn dn</li>
+</ol>
+<p>} u</p>
+<ol start="5" style="list-style-type: decimal">
+<li><p>#define flowi_oif u.__fl_common.flowic_oif</p></li>
+<li><p>#define flowi_iif u.__fl_common.flowic_iif</p></li>
+<li><p>#define flowi_mark u.__fl_common.flowic_mark</p></li>
+<li><p>#define flowi_tos u.__fl_common.flowic_tos</p></li>
+<li><p>#define flowi_scope u.__fl_common.flowic_scope</p></li>
+<li><p>#define flowi_proto u.__fl_common.flowic_proto</p></li>
+<li><p>#define flowi_flags u.__fl_common.flowic_flags</p></li>
+<li><p>#define flowi_secid u.__fl_common.flowic_secid</p></li>
+<li><p>#define flowi_tun_key u.__fl_common.flowic_tun_key</p></li>
+<li><p>#define flowi_uid u.__fl_common.flowic_uid</p></li>
+</ol>
+</div>
+
+<!-- ******** handfourstone_end ************ -->
+
+                </article>
+            </div>
+        </div>
+    <script src="./markdownToc_files/jquery-1.10.2.min.js"></script>
+    <script src="./markdownToc_files/jquery.ztree.all-3.5.min.js"></script>
+    <script src="./markdownToc_files/jquery.ztree_toc.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('#tree').ztree_toc({
+                is_auto_number:false,
+                documment_selector:'.markdown-body',
+                is_expand_all: true,
+            });
+        });
+    </script>
+    </body>
+</html>
