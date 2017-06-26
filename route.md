@@ -32,6 +32,7 @@
 	│	│
 	│	└── route.h
 	│		├── struct rtable
+	│		├── struct rt_cache_stat
 	│		└── xxxxxxxxxxxxxx
 	├── 
 	│	├── fib_lookup.h 		
@@ -736,3 +737,79 @@ union {
 13. \#define flowi_tun_key u.\_\_fl_common.flowic_tun_key
 
 14. \#define flowi_uid u.\_\_fl_common.flowic_uid
+
+
+## flowi_tunnel
+
+1. int flowic_oif
+
+	入口设备标识符。
+
+2. int flowic_iif
+
+	出口设备标识符。
+
+3. \_\_u32 flowic_mark
+
+
+
+4. \_\_u8 flowic_tos
+
+5. \_\_u8 flowic_scope
+
+6. \_\_u8 flowic_proto
+
+	L4 层协议。
+
+7. \_\_u8 flowic_flags
+
+	使用 8、9、10 中定义的三个值。
+
+8. \#define FLOWI_FLAG_ANYSRC 0x01
+
+9. \#define FLOWI_FLAG_KNOWN_NH 0x02
+
+10. \#define FLOWI_FLAG_SKIP_NH_OIF 0x04
+
+11. \_\_u32 flowic_secid
+
+12. struct flowi_tunnel flowic_tun_key
+
+13. kuid_t  flowic_uid
+
+## rt_cache_stat
+
+该结构体存储了在[统计数据](统计数据)一节中介绍的统计信息的计数器。下面描述这些计数器：
+
+1. unsigned int in_slow_tot
+
+	该字段是由于缓存查找失败而需要查找路由表的封包数目（参见 [ip_route_input_slow](#ip_route_input_slow)），只对查找路由表成功的封包计数。该计数器被称为慢的是因为查找路由表与查找路由缓存相比非常慢。该计数器也对广播封包计数，但不对多播封包计数。多播封包计数使用下面的 in_slow_mc 变量来计数。
+
+2. unsigned int in_slow_mc
+
+	该字段是由于缓存查找失败而需要查找路由表的封包数目（参见 [ip_route_input_slow](#ip_route_input_slow)），只对查找路由表成功的封包计数。该计数器被称为慢的是因为查找路由表与查找路由缓存相比非常慢。该计数器只对多播封包计数。单播和广播封包计数使用上面的 in_slow_tot 变量来计数。
+
+3. unsigned int in_no_route
+
+	由于路由表不知道如何到达目的 IP 地址（只可能发生在默认网关没有配置或不可用的情况下）而不能被转发的入口封包的数目。参见 [ip_route_input_slow](#ip_route_input_slow)。没有计数器用于跟踪由于查找路由失败而不能被送出的本地产生的封包的数目。
+
+4. unsigned int in_brd
+
+	被正确接收（合理性检查没有失败）的广播封包的数目。没有计数器用于统计送出的广播封包的数目。
+
+5. unsigned int in_martian_dst
+
+	表示由于目的 IP 地址没有通过合理性检查而被丢弃的封包的数目。合理性检查的范例比如目的地址不能属于所谓的零网段，即地址不能为 0.n.n.n。
+
+6. unsigned int in_martian_src
+
+	表示由于源 IP 地址没有通过合理性检查而被丢弃的封包的数目。合理性检查的范例比如源 IP 地址不能为多播地址或广播地址。
+
+7. unsigned int out_slow_tot
+
+	参见 1 中的介绍，只是该字段用于出口流量的计数。
+
+8. unsigned int out_slow_mc
+
+	参见 2 中的介绍，只是该字段用于出口流量的计数。
+
